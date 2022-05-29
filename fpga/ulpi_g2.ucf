@@ -1,0 +1,52 @@
+############################################################################
+# ULPI Interface
+############################################################################
+# ignore relative timing between the 60MHz USB reference clock and the processing clock CLK_P
+NET "pll_base_inst/CLKOUT1" TNM_NET = TNM_NET_USB_CLK60G;
+NET "ulpi0_clk60_i" TNM_NET = "TNM_NET_USB_CLK60G";        # all synchronous elements after BUFG
+TIMESPEC "TS_USB_CLK60G" = PERIOD "TNM_NET_USB_CLK60G" 16.666 ns HIGH 50%;
+
+NET  "ulpi0_data_io<0>"         LOC = "A7" ;
+NET  "ulpi0_data_io<1>"         LOC = "B8" ;
+NET  "ulpi0_data_io<2>"         LOC = "A8" ;
+NET  "ulpi0_data_io<3>"         LOC = "D6" ;
+NET  "ulpi0_data_io<4>"         LOC = "C6" ;
+NET  "ulpi0_data_io<5>"         LOC = "B6" ;
+NET  "ulpi0_data_io<6>"         LOC = "A6" ;
+NET  "ulpi0_data_io<7>"         LOC = "A4" ;
+NET  "ulpi0_stp_o"              LOC = "A5" ;
+NET  "ulpi0_nxt_i"              LOC = "C5" ;
+NET  "ulpi0_dir_i"              LOC = "C7" ;
+NET  "ulpi0_clk60_i"            LOC = "C12" ;
+
+INST "ulpi0_data_io<0>" TNM = USB_ULPI_OUT;
+INST "ulpi0_data_io<1>" TNM = USB_ULPI_OUT;
+INST "ulpi0_data_io<2>" TNM = USB_ULPI_OUT;
+INST "ulpi0_data_io<3>" TNM = USB_ULPI_OUT;
+INST "ulpi0_data_io<4>" TNM = USB_ULPI_OUT;
+INST "ulpi0_data_io<5>" TNM = USB_ULPI_OUT;
+INST "ulpi0_data_io<6>" TNM = USB_ULPI_OUT;
+INST "ulpi0_data_io<7>" TNM = USB_ULPI_OUT;
+INST "ulpi0_stp_o" TNM = USB_ULPI_OUT;
+TIMEGRP "USB_ULPI_OUT" OFFSET = OUT 8.5 ns AFTER ulpi0_clk60_i;
+INST "ulpi0_data_io<0>" TNM = USB_ULPI_IN;
+INST "ulpi0_data_io<1>" TNM = USB_ULPI_IN;
+INST "ulpi0_data_io<2>" TNM = USB_ULPI_IN;
+INST "ulpi0_data_io<3>" TNM = USB_ULPI_IN;
+INST "ulpi0_data_io<4>" TNM = USB_ULPI_IN;
+INST "ulpi0_data_io<5>" TNM = USB_ULPI_IN;
+INST "ulpi0_data_io<6>" TNM = USB_ULPI_IN;
+INST "ulpi0_data_io<7>" TNM = USB_ULPI_IN;
+INST "ulpi0_nxt_i" TNM = USB_ULPI_IN;
+INST "ulpi0_dir_i" TNM = USB_ULPI_IN;
+TIMEGRP "USB_ULPI_IN" OFFSET = IN 13.666 ns BEFORE ulpi0_clk60_i;  #3ns at ULPI PHY output, period 16.6ns
+
+NET  "ulpi0_data_io<*>" IOSTANDARD = LVCMOS33;
+NET  "ulpi0_stp_o"      IOSTANDARD = LVCMOS33;
+NET  "ulpi0_nxt_i"      IOSTANDARD = LVCMOS33;
+NET  "ulpi0_dir_i"      IOSTANDARD = LVCMOS33;
+NET  "ulpi0_clk60_i"    IOSTANDARD = LVCMOS33;
+
+# 24 Mhz USB3300 clock
+NET "usb_clk" LOC = W12 | IOSTANDARD = LVCMOS33;
+
