@@ -28,32 +28,32 @@ module top
     ,input         ulpi0_clk60_i
 );
 
-// Generate 60 Mhz system clock and 24 Mhz USB clock from 125 Mhz input clock
-wire clk60;
+// Generate 36 Mhz system clock and 24 Mhz USB clock from 125 Mhz input clock
+wire clk36;
 
 IBUFG clk125_buf
 (   .O (clk125),
     .I (SYSCLK)
 );
 
-// 60 Mhz system clock
+// 36 Mhz system clock
 PLL_BASE
     #(.BANDWIDTH              ("OPTIMIZED"),
-      .CLKFBOUT_MULT          (12),
+      .CLKFBOUT_MULT          (36),
       .CLKFBOUT_PHASE         (0.000),
       .CLK_FEEDBACK           ("CLKFBOUT"),
       .CLKIN_PERIOD           (8.000),
       .COMPENSATION           ("SYSTEM_SYNCHRONOUS"),
-      .DIVCLK_DIVIDE          (2),
+      .DIVCLK_DIVIDE          (5),
       .REF_JITTER             (0.010),
       .CLKOUT0_DIVIDE         (25),
       .CLKOUT0_DUTY_CYCLE     (0.500),
       .CLKOUT0_PHASE          (0.000)
     )
-    u_pll_60mhz
+    u_pll_36mhz
       // Output clocks
      (.CLKFBOUT              (clkfbout),
-      .CLKOUT0               (clkout60),
+      .CLKOUT0               (clkout36),
       .CLKOUT1               (),
       .CLKOUT2               (),
       .CLKOUT3               (),
@@ -66,6 +66,9 @@ PLL_BASE
       .CLKFBIN               (clkfbout_buf),
       .CLKIN                 (clk125)
 );
+
+// Output buffering
+//-----------------------------------
 
 // 24 Mhz clock for USB hub
 PLL_BASE
@@ -110,9 +113,9 @@ BUFG clkf_buf1(
     .I (clkfbout1)
 );
 
-BUFG clk60_buf
-  (.O (clk60),
-   .I (clkout60));
+BUFG clk36_buf
+  (.O (clk36),
+   .I (clkout36));
 
 BUFG clk24_buf
 (.O (mhz24_buf),
@@ -207,7 +210,7 @@ wire rst;
 reset_gen
 u_rst
 (
-    .clk_i(clk60),
+    .clk_i(clk36),
     .rst_o(rst)
 );
 
@@ -228,7 +231,7 @@ wire [31:0] gpio_out_en_w;
 
 fpga_top
 #(
-    .CLK_FREQ(60000000)
+    .CLK_FREQ(36000000)
    ,.BAUDRATE(1000000)   // SoC UART baud rate
    ,.UART_SPEED(1000000) // Debug bridge UART baud (should match BAUDRATE)
    ,.C_SCK_RATIO(1)      // SPI clock divider (M25P128 maxclock = 54 Mhz)
@@ -237,7 +240,7 @@ fpga_top
 u_top
 (
     .clock_125_i(clk125)
-    ,.clk_i(clk60)
+    ,.clk_i(clk36)
     ,.rst_i(rst)
 
     ,.dbg_rxd_o(dbg_txd_w)
@@ -351,7 +354,7 @@ endgenerate
 //synthesis attribute IOB of uart_rxd_o is "TRUE"
 reg txd_q;
 
-always @ (posedge clk60 or posedge rst)
+always @ (posedge clk36 or posedge rst)
 if (rst)
     txd_q <= 1'b1;
 else

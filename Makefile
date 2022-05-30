@@ -1,6 +1,6 @@
 .PHONY: help build_all prog_fpga clean_all start_console run
 
-INIT_APP := fw/lwip_test
+INIT_APP := fw/usb_test
 
 help:
 	@echo "Usage:"
