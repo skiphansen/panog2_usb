@@ -2,8 +2,8 @@
 # ULPI Interface
 ############################################################################
 # ignore relative timing between the 60MHz USB reference clock and the processing clock CLK_P
-NET "pll_base_inst/CLKOUT1" TNM_NET = TNM_NET_USB_CLK60G;
-NET "ulpi0_clk60_i" TNM_NET = "TNM_NET_USB_CLK60G";        # all synchronous elements after BUFG
+#NET "pll_base_inst/CLKOUT1" TNM_NET = TNM_NET_USB_CLK60G;
+#NET "ulpi0_clk60_i" TNM_NET = "TNM_NET_USB_CLK60G";        # all synchronous elements after BUFG
 TIMESPEC "TS_USB_CLK60G" = PERIOD "TNM_NET_USB_CLK60G" 16.666 ns HIGH 50%;
 
 NET  "ulpi0_data_io<0>"         LOC = "A7" ;

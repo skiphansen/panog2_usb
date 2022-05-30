@@ -19,29 +19,6 @@ module top
     ,output          flash_si_o
     ,input           flash_so_i
 
-`ifdef INCLUDE_ETHERNET
-    // MII (Media-independent interface)
-    ,input         mii_tx_clk_i
-    ,output        mii_tx_er_o
-    ,output        mii_tx_en_o
-    ,output [7:0]  mii_txd_o
-    ,input         mii_rx_clk_i
-    ,input         mii_rx_er_i
-    ,input         mii_rx_dv_i
-    ,input [7:0]   mii_rxd_i
-
-    // GMII (Gigabit media-independent interface)
-    ,output        gmii_gtx_clk_o
-
-    // RGMII (Reduced pin count gigabit media-independent interface)
-    ,output        rgmii_tx_ctl_o
-    ,input         rgmii_rx_ctl_i
-
-     // MII Management Interface
-     ,output        mdc_o
-     ,inout         mdio_io
-`endif
-
     // ULPI0 Interface
     ,output        usb_clk
     ,inout [7:0]   ulpi0_data_io
@@ -51,36 +28,33 @@ module top
     ,input         ulpi0_clk60_i
 );
 
-// Generate 50 Mhz system clock and 24 Mhz USB clock from 125 Mhz input clock
-wire clk50;
+// Generate 60 Mhz system clock and 24 Mhz USB clock from 125 Mhz input clock
+wire clk60;
 
 IBUFG clk125_buf
 (   .O (clk125),
     .I (SYSCLK)
 );
 
-
+// 60 Mhz system clock
 PLL_BASE
     #(.BANDWIDTH              ("OPTIMIZED"),
-      .CLKFBOUT_MULT          (24),
+      .CLKFBOUT_MULT          (12),
       .CLKFBOUT_PHASE         (0.000),
       .CLK_FEEDBACK           ("CLKFBOUT"),
       .CLKIN_PERIOD           (8.000),
       .COMPENSATION           ("SYSTEM_SYNCHRONOUS"),
-      .DIVCLK_DIVIDE          (5),
+      .DIVCLK_DIVIDE          (2),
       .REF_JITTER             (0.010),
-      .CLKOUT0_DIVIDE         (15),
+      .CLKOUT0_DIVIDE         (25),
       .CLKOUT0_DUTY_CYCLE     (0.500),
-      .CLKOUT0_PHASE          (0.000),
-      .CLKOUT1_DIVIDE         (25),
-      .CLKOUT1_DUTY_CYCLE     (0.500),
-      .CLKOUT1_PHASE          (0.000)
+      .CLKOUT0_PHASE          (0.000)
     )
-    pll_base_inst
+    u_pll_60mhz
       // Output clocks
      (.CLKFBOUT              (clkfbout),
-      .CLKOUT0               (clkout50),
-      .CLKOUT1               (clkout24),
+      .CLKOUT0               (clkout60),
+      .CLKOUT1               (),
       .CLKOUT2               (),
       .CLKOUT3               (),
       .CLKOUT4               (),
@@ -93,15 +67,52 @@ PLL_BASE
       .CLKIN                 (clk125)
 );
 
+// 24 Mhz clock for USB hub
+PLL_BASE
+    #(.BANDWIDTH              ("OPTIMIZED"),
+      .CLKFBOUT_MULT          (24),
+      .CLKFBOUT_PHASE         (0.000),
+      .CLK_FEEDBACK           ("CLKFBOUT"),
+      .CLKIN_PERIOD           (8.000),
+      .COMPENSATION           ("SYSTEM_SYNCHRONOUS"),
+      .DIVCLK_DIVIDE          (5),
+      .REF_JITTER             (0.010),
+      .CLKOUT0_DIVIDE         (25),
+      .CLKOUT0_DUTY_CYCLE     (0.500),
+      .CLKOUT0_PHASE          (0.000)
+    )
+    u_pll_24mhz
+      // Output clocks
+     (.CLKFBOUT              (clkfbout1),
+      .CLKOUT0               (clkout24),
+      .CLKOUT1               (),
+      .CLKOUT2               (),
+      .CLKOUT3               (),
+      .CLKOUT4               (),
+      .CLKOUT5               (),
+      // Status and control signals
+      .LOCKED                (),
+      .RST                   (),
+       // Input clock control
+      .CLKFBIN               (clkfbout_buf1),
+      .CLKIN                 (clk125)
+);
+
+
 // Output buffering
 //-----------------------------------
 BUFG clkf_buf
  (.O (clkfbout_buf),
   .I (clkfbout));
 
-BUFG clk50_buf
-  (.O (clk50),
-   .I (clkout50));
+BUFG clkf_buf1(
+    .O (clkfbout_buf1),
+    .I (clkfbout1)
+);
+
+BUFG clk60_buf
+  (.O (clk60),
+   .I (clkout60));
 
 BUFG clk24_buf
 (.O (mhz24_buf),
@@ -196,7 +207,7 @@ wire rst;
 reset_gen
 u_rst
 (
-    .clk_i(clk50),
+    .clk_i(clk60),
     .rst_o(rst)
 );
 
@@ -217,7 +228,7 @@ wire [31:0] gpio_out_en_w;
 
 fpga_top
 #(
-    .CLK_FREQ(40000000)
+    .CLK_FREQ(60000000)
    ,.BAUDRATE(1000000)   // SoC UART baud rate
    ,.UART_SPEED(1000000) // Debug bridge UART baud (should match BAUDRATE)
    ,.C_SCK_RATIO(1)      // SPI clock divider (M25P128 maxclock = 54 Mhz)
@@ -226,7 +237,7 @@ fpga_top
 u_top
 (
     .clock_125_i(clk125)
-    ,.clk_i(clk50)
+    ,.clk_i(clk60)
     ,.rst_i(rst)
 
     ,.dbg_rxd_o(dbg_txd_w)
@@ -242,28 +253,6 @@ u_top
     ,.gpio_input_i(gpio_in_w)
     ,.gpio_output_o(gpio_out_w)
     ,.gpio_output_enable_o(gpio_out_en_w)
-
-`ifdef INCLUDE_ETHERNET
-    // MII (Media-independent interface)
-    ,.mii_tx_clk_i(mii_tx_clk_i)
-    ,.mii_tx_er_o(mii_tx_er_o)
-    ,.mii_tx_en_o(mii_tx_en_o)
-    ,.mii_txd_o(mii_txd_o)
-    ,.mii_rx_clk_i(mii_rx_clk_i)
-    ,.mii_rx_er_i(mii_rx_er_i)
-    ,.mii_rx_dv_i(mii_rx_dv_i)
-    ,.mii_rxd_i(mii_rxd_i)
-
-    // GMII (Gigabit media-independent interface)
-    ,.gmii_gtx_clk_o(gmii_gtx_clk_o)
-
-    // RGMII (Reduced pin count gigabit media-independent interface)
-    ,.rgmii_tx_ctl_o(rgmii_tx_ctl_o)
-    ,.rgmii_rx_ctl_i(rgmii_rx_ctl_i)
-  // 
-    ,.mdc_o(mdc_o)
-    ,.mdio_io(mdio_io)
-`endif
 
 // UTMI
     ,.utmi_data_out_i(utmi_data_out_w)
@@ -324,8 +313,8 @@ assign spi_so_w    = flash_so_i;
 // 2: Output only - red LED
 // 3: In/out - green LED
 // 4: In/out - blue LED
-// 5: Wolfson codec SDA
-// 6: Wolfson codec SCL
+// 5: n/c (Wolfson codec SDA)
+// 6: n/c (Wolfson codec SCL)
 // 9...31: Not implmented
 //-----------------------------------------------------------------
 
@@ -346,10 +335,8 @@ assign gpio_in_w[4]  = led_blue;
 assign codec_sda = gpio_out_en_w[5]  ? gpio_out_w[5]  : 1'bz;
 assign gpio_in_w[5]  = codec_sda;
 
-
 assign codec_scl = gpio_out_en_w[6]  ? gpio_out_w[6]  : 1'bz;
 assign gpio_in_w[6]  = codec_scl;
-
 
 generate
 for (i=7; i < 32; i=i+1) begin : gpio_in
@@ -364,7 +351,7 @@ endgenerate
 //synthesis attribute IOB of uart_rxd_o is "TRUE"
 reg txd_q;
 
-always @ (posedge clk50 or posedge rst)
+always @ (posedge clk60 or posedge rst)
 if (rst)
     txd_q <= 1'b1;
 else

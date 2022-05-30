@@ -35,7 +35,7 @@ module fpga_top
 // Params
 //-----------------------------------------------------------------
 #(
-     parameter CLK_FREQ         = 50000000
+     parameter CLK_FREQ         = 60000000
     ,parameter BAUDRATE         = 1000000
     ,parameter UART_SPEED       = 1000000
     ,parameter C_SCK_RATIO      = 50
@@ -63,29 +63,6 @@ module fpga_top
     ,output [ 31:0]  gpio_output_o
     ,output [ 31:0]  gpio_output_enable_o
 
-`ifdef INCLUDE_ETHERNET
-     // MII (Media-independent interface)
-     ,input         mii_tx_clk_i
-     ,output        mii_tx_er_o
-     ,output        mii_tx_en_o
-     ,output [7:0]  mii_txd_o
-     ,input         mii_rx_clk_i
-     ,input         mii_rx_er_i
-     ,input         mii_rx_dv_i
-     ,input [7:0]   mii_rxd_i
-
- // GMII (Gigabit media-independent interface)
-     ,output        gmii_gtx_clk_o
-
- // RGMII (Reduced pin count gigabit media-independent interface)
-     ,output        rgmii_tx_ctl_o
-     ,input         rgmii_rx_ctl_i
-
- // MII Management Interface
-     ,output        mdc_o
-     ,inout         mdio_io
-`endif
-     
 // UTMI Interface
     ,input  [  7:0]  utmi_data_out_i
     ,input  [  7:0]  utmi_data_in_i
@@ -521,9 +498,11 @@ always @(posedge clk_i or posedge rst_i)
 assign rst_cpu_w       = rst_cpu_r;
 assign cpu_intr_w      = {31'b0, soc_intr_w};
 
-`ifdef PERIPH_USB_SNIFFER
-usb_sniffer
-u_sniffer
+usbh_host
+#(
+     .USB_CLK_FREQ(CLK_FREQ)
+)
+u_usbh_host
 (
     .clk_i(clk_i)
     ,.rst_i(rst_i)
@@ -549,14 +528,14 @@ u_sniffer
     ,.cfg_rresp_o(ext2_cfg_rresp_w)
 
     // UTMI Interface
-    ,.utmi_data_out_i(utmi_data_out_i)
     ,.utmi_data_in_i(utmi_data_in_i)
-    ,.utmi_txvalid_i(utmi_txvalid_i)
     ,.utmi_txready_i(utmi_txready_i)
     ,.utmi_rxvalid_i(utmi_rxvalid_i)
     ,.utmi_rxactive_i(utmi_rxactive_i)
     ,.utmi_rxerror_i(utmi_rxerror_i)
     ,.utmi_linestate_i(utmi_linestate_i)
+    ,.utmi_data_out_o(utmi_data_out_i)
+    ,.utmi_txvalid_o(utmi_txvalid_i)
 
     ,.utmi_op_mode_o(utmi_op_mode_o)
     ,.utmi_xcvrselect_o(utmi_xcvrselect_o)
@@ -564,59 +543,7 @@ u_sniffer
     ,.utmi_dppulldown_o(utmi_dppulldown_o)
     ,.utmi_dmpulldown_o(utmi_dmpulldown_o)
 );
-`endif
 
-`ifdef INCLUDE_ETHERNET
-eth_axi4lite u_eth (
-      // axi4lite Inputs
-    .clk_i(clk_i)
-    ,.rst_i(rst_i)
-    ,.cfg_awvalid_i(ext1_cfg_awvalid_w)
-    ,.cfg_awaddr_i(ext1_cfg_awaddr_w)
-    ,.cfg_wvalid_i(ext1_cfg_wvalid_w)
-    ,.cfg_wdata_i(ext1_cfg_wdata_w)
-    ,.cfg_wstrb_i(ext1_cfg_wstrb_w)
-    ,.cfg_bready_i(ext1_cfg_bready_w)
-    ,.cfg_arvalid_i(ext1_cfg_arvalid_w)
-    ,.cfg_araddr_i(ext1_cfg_araddr_w)
-    ,.cfg_rready_i(ext1_cfg_rready_w)
-
-    // axi4lite Outputs
-    ,.cfg_awready_o(ext1_cfg_awready_w)
-    ,.cfg_wready_o(ext1_cfg_wready_w)
-    ,.cfg_bvalid_o(ext1_cfg_bvalid_w)
-    ,.cfg_bresp_o(ext1_cfg_bresp_w)
-    ,.cfg_arready_o(ext1_cfg_arready_w)
-    ,.cfg_rvalid_o(ext1_cfg_rvalid_w)
-    ,.cfg_rdata_o(ext1_cfg_rdata_w)
-    ,.cfg_rresp_o(ext1_cfg_rresp_w)
-
-
-    // peripheral inputs
-    ,.clock_125_i(clock_125_i)
-
-    // MII (Media-independent interface)
-    ,.mii_tx_clk_i(mii_tx_clk_i)
-    ,.mii_tx_er_o(mii_tx_er_o)
-    ,.mii_tx_en_o(mii_tx_en_o)
-    ,.mii_txd_o(mii_txd_o)
-    ,.mii_rx_clk_i(mii_rx_clk_i)
-    ,.mii_rx_er_i(mii_rx_er_i)
-    ,.mii_rx_dv_i(mii_rx_dv_i)
-    ,.mii_rxd_i(mii_rxd_i)
-
-    // GMII (Gigabit media-independent interface)
-    ,.gmii_gtx_clk_o(gmii_gtx_clk_o)
-
-    // RGMII (Reduced pin count gigabit media-independent interface)
-    ,.rgmii_tx_ctl_o(rgmii_tx_ctl_o)
-    ,.rgmii_rx_ctl_i(rgmii_rx_ctl_i)
-
-    // MII Management Interface
-    ,.mdc_o(mdc_o)
-    ,.mdio_io(mdio_io)
-);
-`endif
 
 endmodule
 

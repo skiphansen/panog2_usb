@@ -3,29 +3,14 @@
 ###############################################################################
 include ../project.mk
 
-INCLUDE_ETHERNET ?= y
-
 SRC_DIR       = .
 SRC_DIR      += $(CORES_DIR)/core_soc/src_v
 SRC_DIR      += $(CORES_DIR)/dbg_bridge/src_v
 SRC_DIR      += $(CORES_DIR)/cpu/riscv/core/riscv
 SRC_DIR      += $(CORES_DIR)/cpu/riscv/top_tcm_wrapper
 SRC_DIR      += $(CORES_DIR)/core_ulpi_wrapper/src_v
-#SRC_DIR      += $(CORES_DIR)/core_usb_sniffer/src_v
-SRC_DIR      += $(abspath usb_sniffer)
-
-ifeq ($(INCLUDE_ETHERNET),y)
-SRC_DIR      += $(CORES_DIR)/ethernet_mac
-SRC_DIR      += $(CORES_DIR)/ethernet_mac/xilinx
-SRC_DIR      += $(CORES_DIR)/ethernet_mac/xilinx/ipcore_dir
-SRC_DIR      += $(PANO_CORES_DIR)/g2/ethernet_mac
-EXCLUDE_SRC  += $(CORES_DIR)/ethernet_mac/ethernet_mac_tb.vhd
-EXTRA_VFLAGS += INCLUDE_ETHERNET=1
-else
-EXCLUDE_SRC += $(abspath ./eth_axi4lite.v)
-endif
 SRC_DIR	     += ${CORES_DIR}/ulpi_wrapper/src_v
-SRC_DIR	     += ${CORES_DIR}/usb_sniffer/src_v
+SRC_DIR      += $(CORES_DIR)/core_usb_host/src_v
 
 BSCAN_SPI_DIR = $(PANO_CORES_DIR)/xc3sprog
 
@@ -41,21 +26,13 @@ MAP_CMDS = -w -intstyle ise -detail -ir off -ignore_keep_hierarchy -timing -ol h
 # use 4 cores
 PAR_CMDS = -w -intstyle ise -ol high  -mt 4
 
-PATCHED_ETH_MAC = $(CORES_DIR)/ethernet_mac/.patched
 PATCHED_CPU = $(CORES_DIR)/cpu/riscv/.patched
 
 .PHONY: init_and_build
-init_and_build: $(PATCHED_ETH_MAC) $(PATCHED_CPU) all
+init_and_build: $(PATCHED_CPU) all
 
 TOPDIR = ..
 include $(TOPDIR)/pano/make/ise.mk
-
-ETHERNET_MAC_PATCH := $(PATCHES_DIR)/cores/ethernet_mac/0001-BUFGMUX-routing-fix.patch
-
-$(PATCHED_ETH_MAC): $(ETHERNET_MAC_PATCH)
-	(cd $(CORES_DIR)/ethernet_mac; git reset HEAD --hard)
-	(cd $(CORES_DIR)/ethernet_mac; patch -p1 < $(ETHERNET_MAC_PATCH))
-	touch $@
 
 CPU_PATCH_DIR := $(PATCHES_DIR)/cores/cpu/riscv
 CPU_PATCHES   := $(wildcard $(CPU_PATCH_DIR)/*.patch)
@@ -69,5 +46,4 @@ firmware.mem:
 	make -C $(TOPDIR)/fw/blinky init_image
 
 debug:
-	echo "INCLUDE_ETHERNET: $(INCLUDE_ETHERNET)"
 	echo "SRC_DIR: $(SRC_DIR)"
