@@ -28,8 +28,6 @@
 // USA
 //-----------------------------------------------------------------
 
-`define PERIPH_USB_SNIFFER  1
-
 module fpga_top
 //-----------------------------------------------------------------
 // Params
@@ -48,11 +46,12 @@ module fpga_top
     // Inputs
      input           clk_i
     ,input           rst_i
+    ,input           usb_rst_i
+
     ,input           dbg_txd_i
     ,input           spi_miso_i
     ,input           uart_rx_i
     ,input  [ 31:0]  gpio_input_i
-    ,input           clock_125_i
 
     // Outputs
     ,output          dbg_rxd_o
@@ -64,15 +63,15 @@ module fpga_top
     ,output [ 31:0]  gpio_output_enable_o
 
 // UTMI Interface
-    ,input  [  7:0]  utmi_data_out_i
     ,input  [  7:0]  utmi_data_in_i
-    ,input           utmi_txvalid_i
     ,input           utmi_txready_i
     ,input           utmi_rxvalid_i
     ,input           utmi_rxactive_i
     ,input           utmi_rxerror_i
     ,input  [  1:0]  utmi_linestate_i
 
+    ,output [  7:0]  utmi_data_out_i
+    ,output          utmi_txvalid_i
     ,output [  1:0]  utmi_op_mode_o
     ,output [  1:0]  utmi_xcvrselect_o
     ,output          utmi_termselect_o
@@ -505,8 +504,7 @@ usbh_host
 u_usbh_host
 (
     .clk_i(clk_i)
-    ,.rst_i(rst_i)
-    
+    ,.rst_i(usb_rst_i)
     // Peripheral Interface
     ,.cfg_awvalid_i(ext2_cfg_awvalid_w)
     ,.cfg_awaddr_i(ext2_cfg_awaddr_w)
@@ -528,14 +526,14 @@ u_usbh_host
     ,.cfg_rresp_o(ext2_cfg_rresp_w)
 
     // UTMI Interface
+    ,.utmi_data_out_o(utmi_data_out_i)
     ,.utmi_data_in_i(utmi_data_in_i)
+    ,.utmi_txvalid_o(utmi_txvalid_i)
     ,.utmi_txready_i(utmi_txready_i)
     ,.utmi_rxvalid_i(utmi_rxvalid_i)
     ,.utmi_rxactive_i(utmi_rxactive_i)
     ,.utmi_rxerror_i(utmi_rxerror_i)
     ,.utmi_linestate_i(utmi_linestate_i)
-    ,.utmi_data_out_o(utmi_data_out_i)
-    ,.utmi_txvalid_o(utmi_txvalid_i)
 
     ,.utmi_op_mode_o(utmi_op_mode_o)
     ,.utmi_xcvrselect_o(utmi_xcvrselect_o)

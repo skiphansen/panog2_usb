@@ -47,6 +47,7 @@ NET  "ulpi0_nxt_i"      IOSTANDARD = LVCMOS33;
 NET  "ulpi0_dir_i"      IOSTANDARD = LVCMOS33;
 NET  "ulpi0_clk60_i"    IOSTANDARD = LVCMOS33;
 
-# 24 Mhz USB3300 clock
-NET "usb_clk" LOC = W12 | IOSTANDARD = LVCMOS33;
+# 24 Mhz USB3300 and HUB clock
+NET "usb_clk"           LOC = W12 | IOSTANDARD = LVCMOS33;
+NET "usb_hub_reset_"    LOC = W11 | IOSTANDARD = LVCMOS33;
 

@@ -10,6 +10,7 @@
 #define GPIO_BIT_BLUE_LED     0x10
 #define GPIO_BIT_CODEC_SDA    0x20
 #define GPIO_BIT_CODEC_SCL    0x40
+#define GPIO_BIT_USB_RESET    0x80
 
 #endif   // _PANIO_IO_H_
 

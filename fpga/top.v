@@ -26,17 +26,97 @@ module top
     ,input         ulpi0_nxt_i
     ,input         ulpi0_dir_i
     ,input         ulpi0_clk60_i
+
+   // USB Hub
+    ,output        usb_hub_reset_ 
+    ,output        usb_hub_clk
 );
 
-// Generate 36 Mhz system clock and 24 Mhz USB clock from 125 Mhz input clock
-wire clk36;
+wire master_clk_i;
+wire master_clk;
 
+// Generate master system clock and 24 Mhz USB clock from 125 Mhz input clock
 IBUFG clk125_buf
 (   .O (clk125),
     .I (SYSCLK)
 );
 
-// 36 Mhz system clock
+`ifdef CPU_CLK_60MHZ
+localparam CLK_FREQ = 60000000;
+// 60 Mhz system clock
+DCM_SP
+    #(.CLKDV_DIVIDE          (2.000),
+      .CLKFX_DIVIDE          (25),
+      .CLKFX_MULTIPLY        (12),
+      .CLKIN_DIVIDE_BY_2     ("FALSE"),
+      .CLKIN_PERIOD          (8.0),
+      .CLKOUT_PHASE_SHIFT    ("NONE"),
+      .CLK_FEEDBACK          ("NONE"),
+      .DESKEW_ADJUST         ("SYSTEM_SYNCHRONOUS"),
+      .PHASE_SHIFT           (0),
+      .STARTUP_WAIT          ("FALSE"))
+    dcm_sp_inst
+      // Input clock
+     (.CLKIN                 (clk125),
+      .CLKFB                 (1'b0),
+      // Output clocks
+      .CLK0                  (),
+      .CLK90                 (),
+      .CLK180                (),
+      .CLK270                (),
+      .CLK2X                 (),
+      .CLK2X180              (),
+      .CLKFX                 (master_clk_i),
+      .CLKFX180              (),
+      .CLKDV                 (),
+      .PSCLK                 (1'b0),
+      .PSEN                  (1'b0),
+      .PSINCDEC              (1'b0),
+      .PSDONE                (),
+      .LOCKED                (),
+      .STATUS                (),
+
+      .RST                   (1'b0),
+      // Unused pin- tie low
+      .DSSEN                 (1'b0);
+      .CLKFBIN               (clkfbout_buf),
+      .CLKIN                 (clk125)
+);
+
+`elsif  CPU_CLK_48MHZ
+localparam CLK_FREQ = 48000000;
+PLL_BASE
+    #(.BANDWIDTH              ("OPTIMIZED"),
+      .CLKFBOUT_MULT          (5),
+      .CLKFBOUT_PHASE         (0.000),
+      .CLK_FEEDBACK           ("CLKFBOUT"),
+      .CLKIN_PERIOD           (8.000),
+      .COMPENSATION           ("SYSTEM_SYNCHRONOUS"),
+      .DIVCLK_DIVIDE          (1),
+      .REF_JITTER             (0.010),
+      .CLKOUT0_DIVIDE         (13),
+      .CLKOUT0_DUTY_CYCLE     (0.500),
+      .CLKOUT0_PHASE          (0.000)
+    )
+    u_pll_36mhz
+      // Output clocks
+     (.CLKFBOUT              (clkfbout),
+      .CLKOUT0               (master_clk_i),
+      .CLKOUT1               (),
+      .CLKOUT2               (),
+      .CLKOUT3               (),
+      .CLKOUT4               (),
+      .CLKOUT5               (),
+      // Status and control signals
+      .LOCKED                (),
+      .RST                   (1'b0),
+       // Input clock control
+      .CLKFBIN               (clkfbout_buf),
+      .CLKIN                 (clk125)
+);
+
+`elsif  CPU_CLK_36MHZ
+localparam CLK_FREQ = 36000000;
 PLL_BASE
     #(.BANDWIDTH              ("OPTIMIZED"),
       .CLKFBOUT_MULT          (36),
@@ -53,7 +133,7 @@ PLL_BASE
     u_pll_36mhz
       // Output clocks
      (.CLKFBOUT              (clkfbout),
-      .CLKOUT0               (clkout36),
+      .CLKOUT0               (master_clk_i),
       .CLKOUT1               (),
       .CLKOUT2               (),
       .CLKOUT3               (),
@@ -61,14 +141,12 @@ PLL_BASE
       .CLKOUT5               (),
       // Status and control signals
       .LOCKED                (),
-      .RST                   (RESET),
+      .RST                   (1'b0),
        // Input clock control
       .CLKFBIN               (clkfbout_buf),
       .CLKIN                 (clk125)
 );
-
-// Output buffering
-//-----------------------------------
+`endif
 
 // 24 Mhz clock for USB hub
 PLL_BASE
@@ -95,7 +173,7 @@ PLL_BASE
       .CLKOUT5               (),
       // Status and control signals
       .LOCKED                (),
-      .RST                   (),
+      .RST                   (1'b0),
        // Input clock control
       .CLKFBIN               (clkfbout_buf1),
       .CLKIN                 (clk125)
@@ -113,9 +191,9 @@ BUFG clkf_buf1(
     .I (clkfbout1)
 );
 
-BUFG clk36_buf
-  (.O (clk36),
-   .I (clkout36));
+BUFG masterclk_buf
+  (.O (master_clk),
+   .I (master_clk_i));
 
 BUFG clk24_buf
 (.O (mhz24_buf),
@@ -132,23 +210,27 @@ ODDR2 clkout1_buf (
   .Q(usb_clk)
 );
 
+ODDR2 clkout2_buf (
+  .S(1'b0),
+  .R(1'b0),
+  .D0(1'b1),
+  .D1(1'b0),
+  .C0(mhz24_buf),
+  .C1(!mhz24_buf),
+  .CE(1'b1),
+  .Q(usb_hub_clk)
+);
+
 //-----------------------------------------------------------------
 // ULPI Interface
 //-----------------------------------------------------------------
 
-wire clk_bufg_w;
-IBUF u_ibuf ( .I(ulpi0_clk60_i), .O(clk_bufg_w) );
-BUFG u_bufg ( .I(clk_bufg_w),    .O(usb_clk_w) );
+IBUFG u_ibuf ( .I(ulpi0_clk60_i), .O(usb_clk_w) );
 
 // USB clock / reset
 wire usb_rst_w;
 
-reset_gen
-u_rst_usb
-(
-    .clk_i(usb_clk_w),
-    .rst_o(usb_rst_w)
-);
+assign usb_hub_reset_ = !usb_rst_w;
 
 // ULPI Buffers
 wire [7:0] ulpi_out_w;
@@ -187,8 +269,8 @@ OBUF_stp
     .O(ulpi0_stp_o)
 );
 
-wire  [  7:0]  utmi_data_out_w = 8'b0;
-wire           utmi_txvalid_w = 1'b0;
+wire  [  7:0]  utmi_data_out_w;
+wire           utmi_txvalid_w;
 wire           utmi_txready_w;
 wire  [  7:0]  utmi_data_in_w;
 wire           utmi_rxvalid_w;
@@ -210,7 +292,7 @@ wire rst;
 reset_gen
 u_rst
 (
-    .clk_i(clk36),
+    .clk_i(master_clk),
     .rst_o(rst)
 );
 
@@ -231,17 +313,17 @@ wire [31:0] gpio_out_en_w;
 
 fpga_top
 #(
-    .CLK_FREQ(36000000)
+    .CLK_FREQ(CLK_FREQ)
    ,.BAUDRATE(1000000)   // SoC UART baud rate
    ,.UART_SPEED(1000000) // Debug bridge UART baud (should match BAUDRATE)
    ,.C_SCK_RATIO(1)      // SPI clock divider (M25P128 maxclock = 54 Mhz)
    ,.CPU("riscv")        // riscv or armv6m
 )
-u_top
+u_fpga_top
 (
-    .clock_125_i(clk125)
-    ,.clk_i(clk36)
+    .clk_i(master_clk)
     ,.rst_i(rst)
+    ,.usb_rst_i(usb_rst_w)
 
     ,.dbg_rxd_o(dbg_txd_w)
     ,.dbg_txd_i(uart_txd_i)
@@ -318,6 +400,7 @@ assign spi_so_w    = flash_so_i;
 // 4: In/out - blue LED
 // 5: n/c (Wolfson codec SDA)
 // 6: n/c (Wolfson codec SCL)
+// 7: usb host reset
 // 9...31: Not implmented
 //-----------------------------------------------------------------
 
@@ -341,6 +424,7 @@ assign gpio_in_w[5]  = codec_sda;
 assign codec_scl = gpio_out_en_w[6]  ? gpio_out_w[6]  : 1'bz;
 assign gpio_in_w[6]  = codec_scl;
 
+assign usb_rst_w = gpio_out_w[7];
 generate
 for (i=7; i < 32; i=i+1) begin : gpio_in
     assign gpio_in_w[i]  = 1'b0;
@@ -354,7 +438,7 @@ endgenerate
 //synthesis attribute IOB of uart_rxd_o is "TRUE"
 reg txd_q;
 
-always @ (posedge clk36 or posedge rst)
+always @ (posedge master_clk or posedge rst)
 if (rst)
     txd_q <= 1'b1;
 else
