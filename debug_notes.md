@@ -7,7 +7,7 @@ Frame (SOP) packets are generated.  Sometime they are valid sometime they
 are not (see below).
 
 After usbhw_reset() usb_configure_device() is called to configure the root hub, 
-but it returns.
+but it never returns.
 
 ** MORE TO COME ... STAY TUNED TO THIS CHANNEL !**
 
