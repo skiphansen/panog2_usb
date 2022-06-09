@@ -34,6 +34,10 @@ module top
 
 wire master_clk_i;
 wire master_clk;
+// resets
+wire rst;
+wire ulpi_rst_w;
+wire usb_rst_w;
 
 // Generate master system clock and 24 Mhz USB clock from 125 Mhz input clock
 IBUFG clk125_buf
@@ -54,7 +58,8 @@ DCM_SP
       .CLK_FEEDBACK          ("NONE"),
       .DESKEW_ADJUST         ("SYSTEM_SYNCHRONOUS"),
       .PHASE_SHIFT           (0),
-      .STARTUP_WAIT          ("FALSE"))
+      .STARTUP_WAIT          ("FALSE")
+    )
     dcm_sp_inst
       // Input clock
      (.CLKIN                 (clk125),
@@ -78,9 +83,7 @@ DCM_SP
 
       .RST                   (1'b0),
       // Unused pin- tie low
-      .DSSEN                 (1'b0);
-      .CLKFBIN               (clkfbout_buf),
-      .CLKIN                 (clk125)
+      .DSSEN                 (1'b0)
 );
 
 `elsif  CPU_CLK_48MHZ
@@ -224,13 +227,17 @@ ODDR2 clkout2_buf (
 //-----------------------------------------------------------------
 // ULPI Interface
 //-----------------------------------------------------------------
+wire USB_CLK60G;
 
-IBUFG u_ibuf ( .I(ulpi0_clk60_i), .O(usb_clk_w) );
+clkgen_pll
+u_pll
+(
+    .CLKREF_IN(ulpi0_clk60_i),
+    .CLKOUT0G(USB_CLK60G)
+);
 
-// USB clock / reset
-wire usb_rst_w;
 
-assign usb_hub_reset_ = !usb_rst_w;
+
 
 // ULPI Buffers
 wire [7:0] ulpi_out_w;
@@ -285,9 +292,8 @@ wire           utmi_dppulldown_w;
 wire           utmi_dmpulldown_w;
 
 //-----------------------------------------------------------------
-// Reset
+// Resets
 //-----------------------------------------------------------------
-wire rst;
 
 reset_gen
 u_rst
@@ -295,6 +301,24 @@ u_rst
     .clk_i(master_clk),
     .rst_o(rst)
 );
+
+usb_reset_gen
+u_usb_reset
+(
+    .clk_i(master_clk),
+    .usb_rst_i(usb_rst_w | rst),
+    .rst_o(usb_rst_o)
+);
+
+usb_reset_gen
+u_upli_rst
+(
+    .clk_i(USB_CLK60G),
+    .usb_rst_i(usb_rst_w | rst),
+    .rst_o(ulpi_rst_w)
+);
+
+assign usb_hub_reset_ = !usb_rst_o;
 
 //-----------------------------------------------------------------
 // Core
@@ -319,11 +343,11 @@ fpga_top
    ,.C_SCK_RATIO(1)      // SPI clock divider (M25P128 maxclock = 54 Mhz)
    ,.CPU("riscv")        // riscv or armv6m
 )
-u_fpga_top
+u_top
 (
     .clk_i(master_clk)
     ,.rst_i(rst)
-    ,.usb_rst_i(usb_rst_w)
+    ,.usb_rst_i(usb_rst_o)
 
     ,.dbg_rxd_o(dbg_txd_w)
     ,.dbg_txd_i(uart_txd_i)
@@ -359,8 +383,8 @@ u_fpga_top
 ulpi_wrapper
 u_usb
 (
-     .ulpi_clk60_i(usb_clk_w)
-    ,.ulpi_rst_i(usb_rst_w)
+     .ulpi_clk60_i(USB_CLK60G)
+    ,.ulpi_rst_i(ulpi_rst_w)
 
     ,.ulpi_data_out_i(ulpi_in_w)
     ,.ulpi_dir_i(ulpi0_dir_i)
@@ -456,3 +480,29 @@ assign uart_rxd_o  = txd_q;
 assign GMII_RST_N = 1'b1;
 
 endmodule
+
+module usb_reset_gen
+(
+    input  clk_i,
+    input  usb_rst_i,
+    output rst_o
+);
+
+reg [3:0] count_q = 4'b0;
+reg       rst_q   = 1'b1;
+
+always @(posedge clk_i) 
+if (usb_rst_i) begin
+   count_q <= 4'd0;
+   rst_q <= 1'b1;
+end
+else if (count_q != 4'hF)
+    count_q <= count_q + 4'd1;
+else
+    rst_q <= 1'b0;
+
+assign rst_o = rst_q;
+
+endmodule
+
+
