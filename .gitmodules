@@ -13,3 +13,7 @@
 [submodule "cores/core_ulpi_wrapper"]
 	path = cores/core_ulpi_wrapper
 	url = https://github.com/ultraembedded/core_ulpi_wrapper.git
+[submodule "cores/core_usb_host"]
+	path = cores/core_usb_host
+	url = https://github.com/skiphansen/core_usb_host.git
+	branch = pano_debug
