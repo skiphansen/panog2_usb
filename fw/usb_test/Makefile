@@ -21,3 +21,7 @@ ENABLE_LST = yes
 
 include $(TOPDIR)/pano/make/c_prog.mk
 
+run_prebuilt:
+	$(RUN_PREFIX) ../../prebuilt/usb_test $(RUN_ARGS)
+
+

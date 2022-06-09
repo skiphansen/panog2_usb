@@ -32,7 +32,8 @@ start_console:
 	make -C $(INIT_APP) start_console
 
 run:
-	make -C $(INIT_APP) run
+	make -C $(INIT_APP) load
+	make -C $(INIT_APP) run_prebuilt
 
 load:
 	make -C $(INIT_APP) load
