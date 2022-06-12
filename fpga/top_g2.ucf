@@ -26,3 +26,5 @@ NET "pano_button"           LOC = H12 | IOSTANDARD = LVCMOS33 | PULLUP;
 #NET "codec_scl" LOC = U17 | IOSTANDARD = LVCMOS33;
 #NET "codec_sda" LOC = AB17 | IOSTANDARD = LVCMOS33;
 
+# System clock
+NET "master_clk" PERIOD = 48MHz HIGH 50%;

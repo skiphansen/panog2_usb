@@ -17,7 +17,8 @@ NET  "ulpi0_data_io<7>"         LOC = "A4" ;
 NET  "ulpi0_stp_o"              LOC = "A5" ;
 NET  "ulpi0_nxt_i"              LOC = "C5" ;
 NET  "ulpi0_dir_i"              LOC = "C7" ;
-NET  "ulpi0_clk60_i"            LOC = "C12" ;
+NET  "ulpi0_clk60_i"            LOC = "C12";
+NET  "USB3300_RESET"            LOC = "C9";
 
 INST "ulpi0_data_io<0>" TNM = USB_ULPI_OUT;
 INST "ulpi0_data_io<1>" TNM = USB_ULPI_OUT;
@@ -46,8 +47,10 @@ NET  "ulpi0_stp_o"      IOSTANDARD = LVCMOS33;
 NET  "ulpi0_nxt_i"      IOSTANDARD = LVCMOS33;
 NET  "ulpi0_dir_i"      IOSTANDARD = LVCMOS33;
 NET  "ulpi0_clk60_i"    IOSTANDARD = LVCMOS33;
+NET  "USB3300_RESET"    IOSTANDARD = LVCMOS33;
 
 # 24 Mhz USB3300 and HUB clock
 NET "usb_clk"           LOC = W12 | IOSTANDARD = LVCMOS33;
 NET "usb_hub_reset_"    LOC = W11 | IOSTANDARD = LVCMOS33;
+NET mhz24_buf PERIOD = 24MHz HIGH 50%;
 

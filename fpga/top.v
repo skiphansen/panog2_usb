@@ -26,6 +26,7 @@ module top
     ,input         ulpi0_nxt_i
     ,input         ulpi0_dir_i
     ,input         ulpi0_clk60_i
+    ,output        USB3300_RESET
 
    // USB Hub
     ,output        usb_hub_reset_ 
@@ -319,6 +320,7 @@ u_upli_rst
 );
 
 assign usb_hub_reset_ = !usb_rst_o;
+assign USB3300_RESET = usb_rst_o;
 
 //-----------------------------------------------------------------
 // Core
@@ -380,10 +382,11 @@ u_top
     ,.utmi_dmpulldown_o(utmi_dmpulldown_w)
 );
 
-ulpi_wrapper
+ulpi_wrapper_dual_clk
 u_usb
 (
      .ulpi_clk60_i(USB_CLK60G)
+    ,.utmi_clk_i(master_clk)
     ,.ulpi_rst_i(ulpi_rst_w)
 
     ,.ulpi_data_out_i(ulpi_in_w)

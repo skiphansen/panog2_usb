@@ -8,7 +8,7 @@ SRC_DIR      += $(CORES_DIR)/core_soc/src_v
 SRC_DIR      += $(CORES_DIR)/dbg_bridge/src_v
 SRC_DIR      += $(CORES_DIR)/cpu/riscv/core/riscv
 SRC_DIR      += $(CORES_DIR)/cpu/riscv/top_tcm_wrapper
-SRC_DIR      += $(CORES_DIR)/core_ulpi_wrapper/src_v
+#SRC_DIR      += $(CORES_DIR)/core_ulpi_wrapper/src_v
 SRC_DIR      += $(CORES_DIR)/core_usb_host/src_v
 
 BSCAN_SPI_DIR = $(PANO_CORES_DIR)/xc3sprog
