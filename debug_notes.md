@@ -68,7 +68,7 @@ On my rev C the vias are under the C68 silkscreen, this picture of a rev B
 from my usb_sniffer project will give you an idea (ignore the missing hub
 chip!)
 
-![](https://github.com/skiphansen/usb_sniffer/blob/master/fpga/panologic_g2/assets/u7_cleaned.png)
+![](./assets/usb_vias.png)
 
 After scraping off the slik screen and solder mask I tack soldered two
 wirewrap wires to the vias to provide a connection point for my logic
