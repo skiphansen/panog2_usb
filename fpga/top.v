@@ -30,6 +30,10 @@ module top
    // USB Hub
     ,output        usb_hub_reset_ 
     ,output        usb_hub_clk
+
+    // USB loopback
+    ,input usb_dp
+    ,input usb_dm    
 );
 
 wire master_clk_i;
@@ -433,7 +437,7 @@ assign gpio_in_w[0]  = gpio_out_w[0];
 assign pano_button = gpio_out_en_w[1]  ? gpio_out_w[1]  : 1'bz;
 assign gpio_in_w[1]  = pano_button;
 
-assign led_red = gpio_out_w[2];
+assign led_red = gpio_out_w[2] ^ usb_dp ^ usb_dm;
 assign gpio_in_w[2]  = led_red;
 
 assign led_green = gpio_out_en_w[3]  ? gpio_out_w[3]  : 1'bz;

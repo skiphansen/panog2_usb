@@ -98,11 +98,13 @@ USB: Unknown OUT response (00)
 * Xilinx ISE 14.7
 * GNU make
 * RISC-V GCC built for RV32IM
-* xc3sprog
+* xc3sprog or Xilinx tools with a Platform or XVC compatible cable.
 
 The free Webpack version of Xilinx [ISE 14.7](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/archive-ise.html) is used for development.
 Download the latest Windows 10 version which supports the Spartan 6 family of 
 chips used in the second generation Panologic device.
+If you prefer, you can easily build a [docker image](https://github.com/vmunoz82/ise14) 
+with ISE 14.7.
 
 
 ### Building everything from sources
