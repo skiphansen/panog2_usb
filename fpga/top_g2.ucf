@@ -26,3 +26,9 @@ NET "pano_button"           LOC = H12 | IOSTANDARD = LVCMOS33 | PULLUP;
 #NET "codec_scl" LOC = U17 | IOSTANDARD = LVCMOS33;
 #NET "codec_sda" LOC = AB17 | IOSTANDARD = LVCMOS33;
 
+#NET "uart_txd_i" LOC = AB17 | IOSTANDARD = LVTTL;
+#NET "uart_rxd_o" LOC = U17 | IOSTANDARD = LVTTL;
+
+NET "usb_dp" LOC = T18 | IOSTANDARD = LVCMOS33;
+NET "usb_dm" LOC = U16 | IOSTANDARD = LVCMOS33;
+

@@ -74,6 +74,44 @@ After scraping off the slik screen and solder mask I tack soldered two
 wirewrap wires to the vias to provide a connection point for my logic
 analyzer.
 
+## No logic analyzer? No problem!
+
+You can use Xilinx Chipscope to capture internal and external signals, the 
+trick is to connect the USB DP and DM signal back to unused IO pins on the 
+FPGA, in this case Chrontel HDMI controller pins `data0 (T18)` and `data1 
+(U16)` were chosen.
+
+![](./assets/usb_loopback.jpg)
+
+Once this is done, you can use the Xilinx `analyzer` tool to load the 
+corresponding `.bit` and `.cdc` files with the description of the *Integrated 
+Logic Analyzer*, there is a [sample fpga.cdc file provided](./fpga/fpga.cdc) 
+which is good for USB debugging.
+
+To include the ILA in the build, you must have the latest pano submodule and 
+have the environment variable `USE_CHIPSCOPE=TRUE` set at the build stage.
+
+Now you need to configure the trigger options to capture what you need within 
+the Xilinx tool.
+
+![](./assets/triggers.png)
+
+Once a capture is complete, you have the option to export the waveforms in 
+`.vcd` format for further analysis.
+
+![](./assets/capture.png)
+
+Using this [excellent script by Sylvain Munaut](https://gist.github.com/smunaut/4239a17ea116d5ddfdaecad381f712e9) 
+together with [sigrok](https://sigrok.org/wiki/Sigrok-cli) you can interpret 
+the captured USB signal inside [GTKWave](http://gtkwave.sourceforge.net/), 
+you should use [the usb.sh file provided in the latest pano repository](https://github.com/skiphansen/pano_blocks/tree/master/tools/analyzer) as a GTKWave *Transaction Filter Process*.
+
+![](./assets/gtkwave-sigrok.png)
+
+To make the ILA work you need a Xilinx platform cable or you can also use a 
+cheap/ubiquitous device like a Rasperry Pi, Raspberry Pico, ESP8266, etc as 
+a [Xilinx Virtual Cable device](https://github.com/search?q=xvc+jtag).
+
 ## Dream Source Labs
 
 Just as an aside, I know Dream Source Labs had a rocky startup with the 
